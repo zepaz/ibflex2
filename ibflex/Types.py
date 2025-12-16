@@ -1301,6 +1301,7 @@ class Lot(FlexElement):
     relatedTradeID: Optional[str] = None
     rtn: Optional[str] = None
     initialInvestment: Optional[decimal.Decimal] = None
+    positionActionID: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -1441,31 +1442,30 @@ class SymbolSummary(FlexElement):
     relatedTradeID: Optional[str] = None
     origTransactionID: Optional[str] = None
     relatedTransactionID: Optional[str] = None
+    positionActionID: Optional[str] = None
+    changeInPrice: Optional[decimal.Decimal] = None
+    changeInQuantity: Optional[decimal.Decimal] = None
+    closePrice: Optional[decimal.Decimal] = None
+    commodityType: Optional[str] = None
+    cost: Optional[decimal.Decimal] = None
+    deliveryType: Optional[str] = None
+    fifoPnlRealized: Optional[decimal.Decimal] = None
+    fineness: Optional[decimal.Decimal] = None
     ibCommission: Optional[decimal.Decimal] = None
     ibCommissionCurrency: Optional[str] = None
+    ibOrderID: Optional[str] = None
+    initialInvestment: Optional[decimal.Decimal] = None
     netCash: Optional[decimal.Decimal] = None
     netCashInBase: Optional[decimal.Decimal] = None
-    closePrice: Optional[decimal.Decimal] = None
     openCloseIndicator: Optional[enums.OpenClose] = None
     notes: Optional[str] = None
-    cost: Optional[decimal.Decimal] = None
-    fifoPnlRealized: Optional[decimal.Decimal] = None
     mtmPnl: Optional[decimal.Decimal] = None               # PnL at the time of reportins
-    ibOrderID: Optional[str] = None
     origOrderID: Optional[str] = None
     rtn: Optional[str] = None
     whenRealized: Optional[datetime.datetime] = None
     whenReopened: Optional[datetime.datetime] = None
-    changeInPrice: Optional[decimal.Decimal] = None
-    changeInQuantity: Optional[decimal.Decimal] = None
-    initialInvestment: Optional[decimal.Decimal] = None
     serialNumber: Optional[str] = None
-    deliveryType: Optional[str] = None
-    commodityType: Optional[str] = None
-    fineness: Optional[decimal.Decimal] = None
     weight: Optional[str] = None
-
-
 
 
 @dataclass(frozen=True)
@@ -1575,6 +1575,7 @@ class AssetSummary(FlexElement):
     relatedTransactionID: Optional[str] = None
     rtn: Optional[str] = None
     initialInvestment: Optional[decimal.Decimal] = None
+    positionActionID: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -1684,6 +1685,7 @@ class Order(FlexElement):
     fineness: Optional[decimal.Decimal] = None
     weight: Optional[str] = None
     positionActionID: Optional[str] = None
+
 
 @dataclass(frozen=True)
 class TradeConfirm(FlexElement):
@@ -2167,12 +2169,7 @@ class Transfer(FlexElement):
     commodityType: Optional[str] = None
     fineness: Optional[decimal.Decimal] = None
     weight: Optional[str] = None
-    figi: Optional[str] = None
-    settleDate: Optional[datetime.date] = None
-    issuerCountryCode: Optional[str] = None
-    levelOfDetail: Optional[str] = None
-    positionInstructionID: Optional[str] = None
-    positionInstructionSetID: Optional[str] = None
+
 
 @dataclass(frozen=True)
 class UnsettledTransfer(FlexElement):
