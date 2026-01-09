@@ -1146,6 +1146,7 @@ class Trade(FlexElement):
     issuerCountryCode: Optional[str] = None
     rtn: Optional[str] = None
     initialInvestment: Optional[decimal.Decimal] = None
+    positionActionID: Optional[str] = None
 
 
 @dataclass(frozen=True)
