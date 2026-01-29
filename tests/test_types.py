@@ -2067,5 +2067,49 @@ class StockGrantActivityTestCase(unittest.TestCase):
         self.assertEqual(instance.fineness, decimal.Decimal("0.0"))
         self.assertEqual(instance.weight, decimal.Decimal("0.0"))
 
+class TradeInitialInvestmentTestCase(unittest.TestCase):
+    """Test case for Trade.initialInvestment as boolean field.
+    
+    Tests the fix for https://github.com/vroonhof/opensteuerauszug/issues/106
+    where initialInvestment="Yes" was causing parsing errors.
+    """
+    data = ET.fromstring(
+        ('<Trade accountId="U123456" currency="USD" assetCategory="STK" '
+         'symbol="TEST" initialInvestment="Yes" quantity="100" />')
+    )
+
+    def testParse(self):
+        instance = parser.parse_data_element(self.data)
+        self.assertIsInstance(instance, Types.Trade)
+        self.assertEqual(instance.accountId, "U123456")
+        self.assertEqual(instance.currency, "USD")
+        self.assertEqual(instance.assetCategory, enums.AssetClass.STOCK)
+        self.assertEqual(instance.symbol, "TEST")
+        self.assertEqual(instance.initialInvestment, True)
+        self.assertEqual(instance.quantity, decimal.Decimal("100"))
+
+
+class EquitySummaryLiteSurchargeAccrualsTestCase(unittest.TestCase):
+    """Test case for EquitySummaryByReportDateInBase.liteSurchargeAccruals field.
+    
+    Tests the fix for https://github.com/vroonhof/opensteuerauszug/issues/106
+    where liteSurchargeAccruals attribute was missing.
+    """
+    data = ET.fromstring(
+        ('<EquitySummaryByReportDateInBase accountId="U123456" '
+         'reportDate="2024-01-01" cash="1000.00" total="1000.00" '
+         'liteSurchargeAccruals="5.50" />')
+    )
+
+    def testParse(self):
+        instance = parser.parse_data_element(self.data)
+        self.assertIsInstance(instance, Types.EquitySummaryByReportDateInBase)
+        self.assertEqual(instance.accountId, "U123456")
+        self.assertEqual(instance.reportDate, datetime.date(2024, 1, 1))
+        self.assertEqual(instance.cash, decimal.Decimal("1000.00"))
+        self.assertEqual(instance.total, decimal.Decimal("1000.00"))
+        self.assertEqual(instance.liteSurchargeAccruals, decimal.Decimal("5.50"))
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=3)

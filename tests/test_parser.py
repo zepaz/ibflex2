@@ -333,9 +333,11 @@ class ConverterFunctionTestCase(unittest.TestCase):
             parser.convert_int("")
 
     def testConvertBool(self):
-        """ Legal boolean values are 'Y'/'N' """
+        """ Legal boolean values are 'Y'/'N' or 'Yes'/'No' """
         self.assertEqual(parser.convert_bool("Y"), True)
         self.assertEqual(parser.convert_bool("N"), False)
+        self.assertEqual(parser.convert_bool("Yes"), True)
+        self.assertEqual(parser.convert_bool("No"), False)
 
         #  Empty string raises FlexParserError.
         with self.assertRaises(parser.FlexParserError):

@@ -332,8 +332,8 @@ def make_optional(func):
 
 convert_string = make_optional(make_converter(str, prep=utils.identity_func))
 convert_int = make_converter(int, prep=utils.identity_func)
-# IB sends "Y"/"N" for True/False
-convert_bool = make_converter(bool, prep=lambda x: {"Y": True, "N": False}[x])
+# IB sends "Y"/"N" or "Yes"/"No" for True/False
+convert_bool = make_converter(bool, prep=lambda x: {"Y": True, "N": False, "Yes": True, "No": False}[x])
 # IB sends numeric data with place delimiters (commas)
 convert_decimal = make_converter(
     decimal.Decimal,
