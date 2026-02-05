@@ -538,5 +538,239 @@ class ConverterFunctionTestCase(unittest.TestCase):
         )
 
 
+class UnknownAttributeToleranceTestCase(unittest.TestCase):
+    """Tests for the unknown attribute tolerance feature.
+
+    This feature allows the parser to silently ignore unknown XML attributes
+    and element types, which is useful when Interactive Brokers adds new fields
+    to their exports.
+    """
+
+    def setUp(self):
+        """Ensure tolerance is off before each test."""
+        parser.disable_unknown_attribute_tolerance()
+
+    def tearDown(self):
+        """Ensure tolerance is off after each test."""
+        parser.disable_unknown_attribute_tolerance()
+
+    def test_tolerance_default_off(self):
+        """Tolerance is off by default."""
+        self.assertFalse(parser._UNKNOWN_ATTRIBUTE_TOLERANCE)
+
+    def test_enable_disable(self):
+        """enable/disable functions toggle the flag correctly."""
+        self.assertFalse(parser._UNKNOWN_ATTRIBUTE_TOLERANCE)
+        parser.enable_unknown_attribute_tolerance()
+        self.assertTrue(parser._UNKNOWN_ATTRIBUTE_TOLERANCE)
+        parser.disable_unknown_attribute_tolerance()
+        self.assertFalse(parser._UNKNOWN_ATTRIBUTE_TOLERANCE)
+
+    def test_tolerance_functions_accessible_from_package(self):
+        """The tolerance functions are accessible from the top-level ibflex package.
+
+        On the original upstream ibflex package these functions do not exist,
+        so calling ibflex.enable_unknown_attribute_tolerance() would raise
+        AttributeError, providing a clear version guard.
+        """
+        import ibflex
+        self.assertTrue(hasattr(ibflex, 'enable_unknown_attribute_tolerance'))
+        self.assertTrue(hasattr(ibflex, 'disable_unknown_attribute_tolerance'))
+        # Verify they are callable
+        self.assertTrue(callable(ibflex.enable_unknown_attribute_tolerance))
+        self.assertTrue(callable(ibflex.disable_unknown_attribute_tolerance))
+
+    def test_unknown_attr_raises_without_tolerance(self):
+        """Without tolerance, unknown XML attributes raise FlexParserError."""
+        # AccountInformation with an unknown attribute "newIBField"
+        elem = ET.fromstring(
+            '<AccountInformation accountId="U123456" currency="USD" '
+            'newIBField="some_value" />'
+        )
+        with self.assertRaises(parser.FlexParserError):
+            parser.parse_data_element(elem)
+
+    def test_unknown_attr_ignored_with_tolerance(self):
+        """With tolerance enabled, unknown XML attributes are silently ignored."""
+        parser.enable_unknown_attribute_tolerance()
+
+        elem = ET.fromstring(
+            '<AccountInformation accountId="U123456" currency="USD" '
+            'newIBField="some_value" anotherNewField="42" />'
+        )
+        instance = parser.parse_data_element(elem)
+        self.assertIsInstance(instance, Types.AccountInformation)
+        self.assertEqual(instance.accountId, "U123456")
+        self.assertEqual(instance.currency, "USD")
+        # Unknown attributes are not present on the parsed object
+        self.assertFalse(hasattr(instance, 'newIBField'))
+        self.assertFalse(hasattr(instance, 'anotherNewField'))
+
+    def test_known_attrs_still_parsed_with_tolerance(self):
+        """With tolerance, known attributes are still correctly parsed."""
+        parser.enable_unknown_attribute_tolerance()
+
+        elem = ET.fromstring(
+            '<AccountInformation accountId="U123456" acctAlias="test" '
+            'currency="USD" name="Test User" dateOpened="2020-01-15" '
+            'unknownField="ignored" />'
+        )
+        instance = parser.parse_data_element(elem)
+        self.assertIsInstance(instance, Types.AccountInformation)
+        self.assertEqual(instance.accountId, "U123456")
+        self.assertEqual(instance.acctAlias, "test")
+        self.assertEqual(instance.currency, "USD")
+        self.assertEqual(instance.name, "Test User")
+        import datetime
+        self.assertEqual(instance.dateOpened, datetime.date(2020, 1, 15))
+
+    def test_disable_restores_strict_behavior(self):
+        """After disabling tolerance, unknown attributes raise errors again."""
+        parser.enable_unknown_attribute_tolerance()
+
+        elem = ET.fromstring(
+            '<AccountInformation accountId="U123456" currency="USD" '
+            'newIBField="some_value" />'
+        )
+        # Should succeed with tolerance on
+        instance = parser.parse_data_element(elem)
+        self.assertIsInstance(instance, Types.AccountInformation)
+
+        parser.disable_unknown_attribute_tolerance()
+
+        # Should fail with tolerance off
+        with self.assertRaises(parser.FlexParserError):
+            parser.parse_data_element(elem)
+
+    def test_unknown_element_type_raises_without_tolerance(self):
+        """Without tolerance, unknown XML element types raise AttributeError."""
+        elem = ET.fromstring('<BrandNewReportType foo="bar" />')
+        with self.assertRaises(AttributeError):
+            parser.parse_data_element(elem)
+
+    def test_unknown_element_type_returns_none_with_tolerance(self):
+        """With tolerance, unknown element types return None."""
+        parser.enable_unknown_attribute_tolerance()
+
+        elem = ET.fromstring('<BrandNewReportType foo="bar" />')
+        result = parser.parse_data_element(elem)
+        self.assertIsNone(result)
+
+    def test_unknown_elements_filtered_in_container(self):
+        """With tolerance, unknown element types are filtered out of containers."""
+        parser.enable_unknown_attribute_tolerance()
+
+        container = ET.Element("Trades")
+        # Add a known Trade element
+        ET.SubElement(container, "Trade", attrib={
+            "accountId": "U123456",
+            "currency": "USD",
+            "fxRateToBase": "1",
+            "assetCategory": "STK",
+            "symbol": "AAPL",
+            "description": "APPLE INC",
+            "conid": "265598",
+            "tradeID": "123",
+            "reportDate": "2020-01-15",
+            "tradeDate": "2020-01-15",
+            "quantity": "100",
+            "tradePrice": "150.00",
+            "tradeMoney": "15000.00",
+            "proceeds": "-15000.00",
+            "taxes": "0",
+            "ibCommission": "-1.00",
+            "ibCommissionCurrency": "USD",
+            "netCash": "-15001.00",
+            "buySell": "BUY",
+        })
+        # Add an unknown element type
+        ET.SubElement(container, "BrandNewTradeType", attrib={
+            "unknownField": "value"
+        })
+
+        result = parser.parse_element_container(container)
+        # Only the known Trade should be in the result
+        self.assertEqual(len(result), 1)
+        self.assertIsInstance(result[0], Types.Trade)
+
+    def test_full_parse_with_unknown_attrs(self):
+        """Full round-trip: parse a FlexQueryResponse with unknown attributes."""
+        parser.enable_unknown_attribute_tolerance()
+
+        xml_data = (
+            '<FlexQueryResponse queryName="test" type="AF">'
+            '<FlexStatements count="1">'
+            '<FlexStatement accountId="U123456" fromDate="2020-01-01" '
+            'toDate="2020-12-31" period="Annual" '
+            'whenGenerated="2021-01-01;120000" '
+            'brandNewStatementAttr="surprise" />'
+            '</FlexStatements>'
+            '</FlexQueryResponse>'
+        )
+        response = parser.parse(xml_data.encode())
+        self.assertIsInstance(response, Types.FlexQueryResponse)
+        self.assertEqual(response.queryName, "test")
+        self.assertEqual(len(response.FlexStatements), 1)
+        stmt = response.FlexStatements[0]
+        self.assertEqual(stmt.accountId, "U123456")
+
+    def test_full_parse_unknown_attrs_fails_without_tolerance(self):
+        """Without tolerance, unknown attributes in full parse raise errors."""
+        xml_data = (
+            '<FlexQueryResponse queryName="test" type="AF">'
+            '<FlexStatements count="1">'
+            '<FlexStatement accountId="U123456" fromDate="2020-01-01" '
+            'toDate="2020-12-31" period="Annual" '
+            'whenGenerated="2021-01-01;120000" '
+            'brandNewStatementAttr="surprise" />'
+            '</FlexStatements>'
+            '</FlexQueryResponse>'
+        )
+        with self.assertRaises(parser.FlexParserError):
+            parser.parse(xml_data.encode())
+
+    def test_unknown_contained_element_in_statement(self):
+        """With tolerance, unknown contained elements in FlexStatement are ignored."""
+        parser.enable_unknown_attribute_tolerance()
+
+        xml_data = (
+            '<FlexQueryResponse queryName="test" type="AF">'
+            '<FlexStatements count="1">'
+            '<FlexStatement accountId="U123456" fromDate="2020-01-01" '
+            'toDate="2020-12-31" period="Annual" '
+            'whenGenerated="2021-01-01;120000">'
+            '<BrandNewSection>'
+            '<BrandNewItem foo="bar" />'
+            '</BrandNewSection>'
+            '</FlexStatement>'
+            '</FlexStatements>'
+            '</FlexQueryResponse>'
+        )
+        response = parser.parse(xml_data.encode())
+        self.assertIsInstance(response, Types.FlexQueryResponse)
+        self.assertEqual(len(response.FlexStatements), 1)
+        self.assertEqual(response.FlexStatements[0].accountId, "U123456")
+
+    def test_multiple_unknown_attrs_on_trade(self):
+        """Unknown attributes on Trade elements are ignored with tolerance."""
+        parser.enable_unknown_attribute_tolerance()
+
+        elem = ET.fromstring(
+            '<Trade accountId="U123456" currency="USD" fxRateToBase="1" '
+            'assetCategory="STK" symbol="AAPL" description="APPLE INC" '
+            'conid="265598" tradeID="123" reportDate="2020-01-15" '
+            'tradeDate="2020-01-15" quantity="100" tradePrice="150.00" '
+            'tradeMoney="15000.00" proceeds="-15000.00" taxes="0" '
+            'ibCommission="-1.00" ibCommissionCurrency="USD" '
+            'netCash="-15001.00" buySell="BUY" '
+            'newField1="value1" newField2="value2" newField3="value3" />'
+        )
+        instance = parser.parse_data_element(elem)
+        self.assertIsInstance(instance, Types.Trade)
+        self.assertEqual(instance.symbol, "AAPL")
+        self.assertEqual(instance.tradeID, "123")
+        self.assertFalse(hasattr(instance, 'newField1'))
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=3)
