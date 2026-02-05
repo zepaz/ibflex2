@@ -192,18 +192,14 @@ def parse_data_element(
     #  that contain other data elements.
     contained_elements = {child.tag: parse_element(child) for child in elem}
     if contained_elements:
+        assert elem.tag in ("FlexQueryResponse", "FlexStatement")
         if _UNKNOWN_ATTRIBUTE_TOLERANCE:
-            if elem.tag in ("FlexQueryResponse", "FlexStatement"):
-                #  Filter out unknown or unparseable contained elements
-                contained_elements = {
-                    k: v for k, v in contained_elements.items()
-                    if k in known and v is not None
-                }
-                attrs.update(contained_elements)
-            #  else: tolerance is on, silently ignore children on other elements
-        else:
-            assert elem.tag in ("FlexQueryResponse", "FlexStatement")
-            attrs.update(contained_elements)
+            #  Filter out unknown or unparseable contained elements
+            contained_elements = {
+                k: v for k, v in contained_elements.items()
+                if k in known and v is not None
+            }
+        attrs.update(contained_elements)
 
     try:
         return Class(**attrs)
