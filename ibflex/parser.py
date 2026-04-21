@@ -21,6 +21,56 @@ class FlexParserError(Exception):
     """ Error experienced while parsing Flex XML data. """
 
 
+###############################################################################
+#  UNKNOWN ATTRIBUTE TOLERANCE
+###############################################################################
+_UNKNOWN_ATTRIBUTE_TOLERANCE = False
+
+
+def enable_unknown_attribute_tolerance():
+    """Enable tolerance for unknown XML attributes in IB Flex data.
+
+    When enabled, unknown attributes and element types in the XML data are
+    silently ignored instead of raising FlexParserError. This is useful when
+    Interactive Brokers adds new fields to their exports that are not yet
+    defined in the Types module.
+
+    This function is only available in the forked version of ibflex.
+    Attempting to call it on the original upstream package will raise
+    AttributeError (the method does not exist there), providing a clear
+    signal that the feature is not supported.
+
+    Default: off (strict mode - unknown attributes raise errors).
+
+    See also: disable_unknown_attribute_tolerance()
+    """
+    global _UNKNOWN_ATTRIBUTE_TOLERANCE
+    _UNKNOWN_ATTRIBUTE_TOLERANCE = True
+
+
+def disable_unknown_attribute_tolerance():
+    """Disable tolerance for unknown XML attributes (the default behavior).
+
+    After calling this, unknown attributes in XML data will raise
+    FlexParserError as usual.
+
+    See also: enable_unknown_attribute_tolerance()
+    """
+    global _UNKNOWN_ATTRIBUTE_TOLERANCE
+    _UNKNOWN_ATTRIBUTE_TOLERANCE = False
+
+
+def _get_known_attributes(Class):
+    """Get all known attribute names for a FlexElement subclass,
+    including inherited attributes from base classes.
+    """
+    attrs = set()
+    for klass in Class.__mro__:
+        if hasattr(klass, '__annotations__'):
+            attrs.update(klass.__annotations__.keys())
+    return attrs
+
+
 DataType = Union[
     None, str, int, bool, decimal.Decimal, datetime.date, datetime.time,
     datetime.datetime, enums.EnumType, Tuple[str, ...], Tuple[enums.Code, ...]
@@ -99,22 +149,40 @@ def parse_element_container(elem: ET.Element) -> Tuple[Types.FlexElement, ...]:
         return tuple(itertools.chain.from_iterable(fxlots))
 
     instances = tuple(parse_data_element(child) for child in elem)
+    if _UNKNOWN_ATTRIBUTE_TOLERANCE:
+        instances = tuple(inst for inst in instances if inst is not None)
     return instances
 
 
 def parse_data_element(
     elem: ET.Element
-) -> Types.FlexElement:
+) -> Optional[Types.FlexElement]:
     """Parse an XML data element into a Types.FlexElement subclass instance.
+
+    Returns None if unknown_attribute_tolerance is enabled and the element
+    type is not recognized.
     """
     #  Look up XML element's matching FlexElement subclass in ibflex.Types.
-    Class = getattr(Types, elem.tag)
+    try:
+        Class = getattr(Types, elem.tag)
+    except AttributeError:
+        if _UNKNOWN_ATTRIBUTE_TOLERANCE:
+            return None
+        raise
+
+    #  When tolerance is enabled, pre-compute known attributes and filter
+    known = _get_known_attributes(Class) if _UNKNOWN_ATTRIBUTE_TOLERANCE else None
 
     #  Parse element attributes
+    if known is not None:
+        attrib_items = [(k, v) for k, v in elem.attrib.items() if k in known]
+    else:
+        attrib_items = list(elem.attrib.items())
+
     try:
         attrs = dict(
             parse_element_attr(Class, k, v)
-            for k, v in elem.attrib.items()
+            for k, v in attrib_items
         )
     except KeyError as exc:
         msg = f"{Class.__name__} has no attribute " + str(exc)
@@ -125,6 +193,12 @@ def parse_data_element(
     contained_elements = {child.tag: parse_element(child) for child in elem}
     if contained_elements:
         assert elem.tag in ("FlexQueryResponse", "FlexStatement")
+        if _UNKNOWN_ATTRIBUTE_TOLERANCE:
+            #  Filter out unknown or unparseable contained elements
+            contained_elements = {
+                k: v for k, v in contained_elements.items()
+                if k in known and v is not None
+            }
         attrs.update(contained_elements)
 
     try:
@@ -170,9 +244,11 @@ def parse_element_attr(
 #  INPUT VALUE PREP FUNCTIONS FOR DATA CONVERTERS
 #  These are just implementation details for converters and don't need testing.
 ###############################################################################
-def prep_date(value: str) -> Tuple[int, int, int]:
+def prep_date(value: str) -> Optional[Tuple[int, int, int]]:
     """Returns a tuple of (year, month, day).
     """
+    if value == "MULTI":
+        return None  # Summaries have MULTI as date value.
     date_format = DATE_FORMATS[len(value)][value.count('/')]
     return datetime.datetime.strptime(value, date_format).timetuple()[:3]
 
@@ -184,9 +260,11 @@ def prep_time(value: str) -> Tuple[int, int, int]:
     return datetime.datetime.strptime(value, time_format).timetuple()[3:6]
 
 
-def prep_datetime(value: str) -> Tuple[int, ...]:
+def prep_datetime(value: str) -> Optional[Tuple[int, ...]]:
     """Returns a tuple of (year, month, day, hour, minute, second).
     """
+    if value == "MULTI":
+        return None  # Summaries have MULTI as date value.
     #  HACK - some old data has ", " separator instead of ",".
     value = value.replace(", ", ",")
 
@@ -328,8 +406,8 @@ def make_optional(func):
 
 convert_string = make_optional(make_converter(str, prep=utils.identity_func))
 convert_int = make_converter(int, prep=utils.identity_func)
-# IB sends "Y"/"N" for True/False
-convert_bool = make_converter(bool, prep=lambda x: {"Y": True, "N": False}[x])
+# IB sends "Y"/"N" or "Yes"/"No" for True/False
+convert_bool = make_converter(bool, prep=lambda x: {"Y": True, "N": False, "Yes": True, "No": False}[x])
 # IB sends numeric data with place delimiters (commas)
 convert_decimal = make_converter(
     decimal.Decimal,

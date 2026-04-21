@@ -4,6 +4,8 @@ from . import Types
 from .Types import *
 from . import parser
 from .parser import parse
+from .parser import enable_unknown_attribute_tolerance
+from .parser import disable_unknown_attribute_tolerance
 from . import utils
 from . import client
 
