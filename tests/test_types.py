@@ -945,7 +945,20 @@ class CashTransactionTestCase(unittest.TestCase):
          'dateTime="2015-10-06" amount="27800" type="Dividends" tradeID="" code="" '
          'transactionID="5767420360" reportDate="2015-10-06" clientReference="" />')
     )
-
+    data_two = ET.fromstring(
+        ('<CashTransaction accountId="U123456" acctAlias="ibflex test" model="" '
+         'currency="AUD" fxRateToBase="1" assetCategory="STK" subCategory="ETF" '
+         'symbol="QPON" description="QPON (AU00000QPON6) CASH DIVIDEND AUD 0.09575 (Mixed Income)" '
+         'conid="278373440" securityID="AU00000QPON6" securityIDType="ISIN" cusip="" '
+         'isin="AU00000QPON6" figi="BBG00GV1LZW1" listingExchange="ASX" underlyingConid="" '
+         'underlyingSymbol="QPON" underlyingSecurityID="" underlyingListingExchange="" '
+         'issuer="" issuerCountryCode="AU" multiplier="1" strike="" expiry="" putCall="" '
+         'principalAdjustFactor="" dateTime="2026-04-21;102000" settleDate="2026-04-20" '
+         'availableForTradingDate="" amount="957500.00" type="Dividends" '
+         'dividendType="Mixed Income" tradeID="" code="" transactionID="123456789" '
+         'reportDate="2026-04-20" exDate="2026-04-01" clientReference="" '
+         'actionID="123456" levelOfDetail="DETAIL" serialNumber="" deliveryType="" '
+         'commodityType="" fineness="0.0" weight="0.0" />')
     def testParse(self):
         instance = parser.parse_data_element(self.data)
         self.assertIsInstance(instance, Types.CashTransaction)
@@ -978,6 +991,14 @@ class CashTransactionTestCase(unittest.TestCase):
         self.assertEqual(instance.transactionID, "5767420360")
         self.assertEqual(instance.reportDate, datetime.date(2015,10, 6))
         self.assertEqual(instance.clientReference, None)
+        self.assertEqual(instance.dividendType, None)
+
+        instance_two = parser.parse_data_element(self.data_two)
+        self.assertIsInstance(instance_two, Types.CashTransaction)
+        self.assertEqual(instance_two.dividendType, "Mixed Income")
+        self.assertEqual(instance_two.conid, "278373440")
+        self.assertEqual(instance_two.assetCategory, enums.AssetClass.STOCK)
+        self.assertEqual(instance_two.amount, decimal.Decimal("957500"))
 
 
 class DebitCardActivityTestCase(unittest.TestCase):
