@@ -959,6 +959,7 @@ class CashTransactionTestCase(unittest.TestCase):
          'reportDate="2026-04-20" exDate="2026-04-01" clientReference="" '
          'actionID="123456" levelOfDetail="DETAIL" serialNumber="" deliveryType="" '
          'commodityType="" fineness="0.0" weight="0.0" />')
+    )
     def testParse(self):
         instance = parser.parse_data_element(self.data)
         self.assertIsInstance(instance, Types.CashTransaction)

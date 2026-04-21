@@ -1455,7 +1455,6 @@ class SymbolSummary(FlexElement):
     ibCommissionCurrency: Optional[str] = None
     ibOrderID: Optional[str] = None
     initialInvestment: Optional[bool] = None
-    mtmPnl: Optional[decimal.Decimal] = None
     netCash: Optional[decimal.Decimal] = None
     netCashInBase: Optional[decimal.Decimal] = None
     openCloseIndicator: Optional[enums.OpenClose] = None
