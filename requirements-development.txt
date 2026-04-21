@@ -8,8 +8,9 @@ requests
 types-requests
 
 # test running
-nose
+pytest
 coverage
 pylint
 mypy
 black
+pytest-cov
