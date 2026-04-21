@@ -107,7 +107,7 @@ def parse(source) -> Types.FlexQueryResponse:
 
 def parse_element(
     elem: ET.Element
-) -> Union[Types.FlexElement, Tuple[Types.FlexElement, ...]]:
+) -> Types.FlexElement | None | Tuple[Types.FlexElement, ...]:
     """Distinguish XML data element from container element; dispatch accordingly.
 
     Flex format stores data as XML element attributes, while container elements
@@ -120,7 +120,7 @@ def parse_element(
         try:
             count = int(elem.get("count", ""))
             assert len(elem) == count
-        except (ValueError):
+        except ValueError:
             msg = f"Malformed FlexStatements.count={elem.get('count', '')}"
             raise FlexParserError(msg)
         except AssertionError:

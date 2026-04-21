@@ -469,7 +469,6 @@ class EquitySummaryByReportDateInBase(FlexElement):
     physDel: Optional[decimal.Decimal] = None
     physDelLong: Optional[decimal.Decimal] = None
     physDelShort: Optional[decimal.Decimal] = None
-    currency: Optional[str] = None
     insuredBankDepositRedemptionCashComponentLong: Optional[decimal.Decimal] = None
     insuredBankDepositRedemptionCashComponentShort: Optional[decimal.Decimal] = None
     incentiveCouponAccrualsLong: Optional[decimal.Decimal] = None
@@ -1412,7 +1411,7 @@ class SymbolSummary(FlexElement):
     settleDateTarget: Optional[datetime.date] = None        # expected date of ownership transfer
     taxes: Optional[decimal.Decimal] = None
     tradeDate: Optional[datetime.date] = None
-    tradePrice: Optional[decimal.Decimal] = None    
+    tradePrice: Optional[decimal.Decimal] = None
     tradeMoney: Optional[decimal.Decimal] = None            # TradeMoney = Proceeds + Fees + Commissions
     exchange: Optional[str] = None
     buySell: Optional[enums.BuySell] = None
@@ -2172,8 +2171,6 @@ class Transfer(FlexElement):
     fineness: Optional[decimal.Decimal] = None
     weight: Optional[str] = None
     costBasis: Optional[decimal.Decimal] = None
-
-
 
 
 @dataclass(frozen=True)
