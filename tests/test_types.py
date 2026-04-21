@@ -2005,6 +2005,67 @@ class OptionEAEBuyTestCase(unittest.TestCase):
         self.assertEqual(instance.mtmPnl, decimal.Decimal("-118.00"))
         self.assertEqual(instance.tradeID, None)
 
+class StockGrantActivityTestCase(unittest.TestCase):
+    data = ET.fromstring(
+        (
+            '<StockGrantActivity accountId="U123456" acctAlias="" model="" currency="USD" '
+            'fxRateToBase="0.73459" assetCategory="STK" subCategory="COMMON" '
+            'symbol="IBKR" description="INTERACTIVE BROKERS GRO-CL A" conid="43645865" '
+            'securityID="US45841N1072" securityIDType="ISIN" cusip="45841N107" '
+            'isin="US45841N1072" figi="BBG000LV0836" listingExchange="NASDAQ" '
+            'underlyingConid="" underlyingSymbol="IBKR" underlyingSecurityID="" '
+            'underlyingListingExchange="" issuer="" issuerCountryCode="US" '
+            'multiplier="1" strike="" expiry="" putCall="" principalAdjustFactor="" '
+            'reportDate="2025-06-12" '
+            'activityDescription="Stock Award Grant for Cash Deposit" '
+            'awardDate="2025-06-12" vestingDate="2026-06-12" quantity="2.6454" '
+            'price="204.51" value="541.01" serialNumber="" deliveryType="" '
+            'commodityType="" fineness="0.0" weight="0.0"/>'
+        )
+    )
+
+    def testParse(self):
+        instance = parser.parse_data_element(self.data)
+        self.assertIsInstance(instance, Types.StockGrantActivity)
+        self.assertEqual(instance.accountId, "U123456")
+        self.assertEqual(instance.acctAlias, None)
+        self.assertEqual(instance.model, None)
+        self.assertEqual(instance.currency, "USD")
+        self.assertEqual(instance.fxRateToBase, decimal.Decimal("0.73459"))
+        self.assertEqual(instance.assetCategory, enums.AssetClass.STOCK)
+        self.assertEqual(instance.subCategory, "COMMON")
+        self.assertEqual(instance.symbol, "IBKR")
+        self.assertEqual(instance.description, "INTERACTIVE BROKERS GRO-CL A")
+        self.assertEqual(instance.conid, "43645865")
+        self.assertEqual(instance.securityID, "US45841N1072")
+        self.assertEqual(instance.securityIDType, "ISIN")
+        self.assertEqual(instance.cusip, "45841N107")
+        self.assertEqual(instance.isin, "US45841N1072")
+        self.assertEqual(instance.figi, "BBG000LV0836")
+        self.assertEqual(instance.listingExchange, "NASDAQ")
+        self.assertEqual(instance.underlyingConid, None)
+        self.assertEqual(instance.underlyingSymbol, "IBKR")
+        self.assertEqual(instance.underlyingSecurityID, None)
+        self.assertEqual(instance.underlyingListingExchange, None)
+        self.assertEqual(instance.issuer, None)
+        self.assertEqual(instance.issuerCountryCode, "US")
+        self.assertEqual(instance.multiplier, decimal.Decimal("1"))
+        self.assertEqual(instance.strike, None)
+        self.assertEqual(instance.expiry, None)
+        self.assertEqual(instance.putCall, None)
+        self.assertEqual(instance.principalAdjustFactor, None)
+        self.assertEqual(instance.reportDate, datetime.date(2025,6,12))
+        self.assertEqual(instance.activityDescription, "Stock Award Grant for Cash Deposit")
+        self.assertEqual(instance.awardDate, datetime.date(2025,6,12))
+        self.assertEqual(instance.vestingDate, datetime.date(2026,6,12))
+        self.assertEqual(instance.quantity, decimal.Decimal("2.6454"))
+        self.assertEqual(instance.price, decimal.Decimal("204.51"))
+        self.assertEqual(instance.value, decimal.Decimal("541.01"))
+        self.assertEqual(instance.serialNumber, None)
+        self.assertEqual(instance.deliveryType, None)
+        self.assertEqual(instance.commodityType, None)
+        self.assertEqual(instance.fineness, decimal.Decimal("0.0"))
+        self.assertEqual(instance.weight, decimal.Decimal("0.0"))
 
 if __name__ == '__main__':
     unittest.main(verbosity=3)
