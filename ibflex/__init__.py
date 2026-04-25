@@ -10,5 +10,9 @@ from .__version__ import (
     __version__,
 )
 from .enums import *
-from .parser import parse
+from .parser import (
+    disable_unknown_attribute_tolerance,
+    enable_unknown_attribute_tolerance,
+    parse,
+)
 from .Types import *

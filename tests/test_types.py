@@ -943,7 +943,21 @@ class CashTransactionTestCase(unittest.TestCase):
          'dateTime="2015-10-06" amount="27800" type="Dividends" tradeID="" code="" '
          'transactionID="5767420360" reportDate="2015-10-06" clientReference="" />'
     )
-
+    data_two = ET.fromstring(
+        '<CashTransaction accountId="U123456" acctAlias="ibflex test" model="" '
+         'currency="AUD" fxRateToBase="1" assetCategory="STK" subCategory="ETF" '
+         'symbol="QPON" description="QPON (AU00000QPON6) CASH DIVIDEND AUD 0.09575 (Mixed Income)" '
+         'conid="278373440" securityID="AU00000QPON6" securityIDType="ISIN" cusip="" '
+         'isin="AU00000QPON6" figi="BBG00GV1LZW1" listingExchange="ASX" underlyingConid="" '
+         'underlyingSymbol="QPON" underlyingSecurityID="" underlyingListingExchange="" '
+         'issuer="" issuerCountryCode="AU" multiplier="1" strike="" expiry="" putCall="" '
+         'principalAdjustFactor="" dateTime="2026-04-21;102000" settleDate="2026-04-20" '
+         'availableForTradingDate="" amount="957500.00" type="Dividends" '
+         'dividendType="Mixed Income" tradeID="" code="" transactionID="123456789" '
+         'reportDate="2026-04-20" exDate="2026-04-01" clientReference="" '
+         'actionID="123456" levelOfDetail="DETAIL" serialNumber="" deliveryType="" '
+         'commodityType="" fineness="0.0" weight="0.0" />'
+    )
     def testParse(self):
         instance = parser.parse_data_element(self.data)
         self.assertIsInstance(instance, Types.CashTransaction)
@@ -976,6 +990,14 @@ class CashTransactionTestCase(unittest.TestCase):
         self.assertEqual(instance.transactionID, "5767420360")
         self.assertEqual(instance.reportDate, datetime.date(2015,10, 6))
         self.assertEqual(instance.clientReference, None)
+        self.assertEqual(instance.dividendType, None)
+
+        instance_two = parser.parse_data_element(self.data_two)
+        self.assertIsInstance(instance_two, Types.CashTransaction)
+        self.assertEqual(instance_two.dividendType, "Mixed Income")
+        self.assertEqual(instance_two.conid, "278373440")
+        self.assertEqual(instance_two.assetCategory, enums.AssetClass.STOCK)
+        self.assertEqual(instance_two.amount, decimal.Decimal("957500"))
 
 
 class DebitCardActivityTestCase(unittest.TestCase):
@@ -1981,6 +2003,111 @@ class OptionEAEBuyTestCase(unittest.TestCase):
         self.assertEqual(instance.fxPnl, decimal.Decimal("0.00"))
         self.assertEqual(instance.mtmPnl, decimal.Decimal("-118.00"))
         self.assertEqual(instance.tradeID, None)
+
+class StockGrantActivityTestCase(unittest.TestCase):
+    data = ET.fromstring(
+
+            '<StockGrantActivity accountId="U123456" acctAlias="" model="" currency="USD" '
+            'fxRateToBase="0.73459" assetCategory="STK" subCategory="COMMON" '
+            'symbol="IBKR" description="INTERACTIVE BROKERS GRO-CL A" conid="43645865" '
+            'securityID="US45841N1072" securityIDType="ISIN" cusip="45841N107" '
+            'isin="US45841N1072" figi="BBG000LV0836" listingExchange="NASDAQ" '
+            'underlyingConid="" underlyingSymbol="IBKR" underlyingSecurityID="" '
+            'underlyingListingExchange="" issuer="" issuerCountryCode="US" '
+            'multiplier="1" strike="" expiry="" putCall="" principalAdjustFactor="" '
+            'reportDate="2025-06-12" '
+            'activityDescription="Stock Award Grant for Cash Deposit" '
+            'awardDate="2025-06-12" vestingDate="2026-06-12" quantity="2.6454" '
+            'price="204.51" value="541.01" serialNumber="" deliveryType="" '
+            'commodityType="" fineness="0.0" weight="0.0"/>'
+
+    )
+
+    def testParse(self):
+        instance = parser.parse_data_element(self.data)
+        self.assertIsInstance(instance, Types.StockGrantActivity)
+        self.assertEqual(instance.accountId, "U123456")
+        self.assertEqual(instance.acctAlias, None)
+        self.assertEqual(instance.model, None)
+        self.assertEqual(instance.currency, "USD")
+        self.assertEqual(instance.fxRateToBase, decimal.Decimal("0.73459"))
+        self.assertEqual(instance.assetCategory, enums.AssetClass.STOCK)
+        self.assertEqual(instance.subCategory, "COMMON")
+        self.assertEqual(instance.symbol, "IBKR")
+        self.assertEqual(instance.description, "INTERACTIVE BROKERS GRO-CL A")
+        self.assertEqual(instance.conid, "43645865")
+        self.assertEqual(instance.securityID, "US45841N1072")
+        self.assertEqual(instance.securityIDType, "ISIN")
+        self.assertEqual(instance.cusip, "45841N107")
+        self.assertEqual(instance.isin, "US45841N1072")
+        self.assertEqual(instance.figi, "BBG000LV0836")
+        self.assertEqual(instance.listingExchange, "NASDAQ")
+        self.assertEqual(instance.underlyingConid, None)
+        self.assertEqual(instance.underlyingSymbol, "IBKR")
+        self.assertEqual(instance.underlyingSecurityID, None)
+        self.assertEqual(instance.underlyingListingExchange, None)
+        self.assertEqual(instance.issuer, None)
+        self.assertEqual(instance.issuerCountryCode, "US")
+        self.assertEqual(instance.multiplier, decimal.Decimal("1"))
+        self.assertEqual(instance.strike, None)
+        self.assertEqual(instance.expiry, None)
+        self.assertEqual(instance.putCall, None)
+        self.assertEqual(instance.principalAdjustFactor, None)
+        self.assertEqual(instance.reportDate, datetime.date(2025,6,12))
+        self.assertEqual(instance.activityDescription, "Stock Award Grant for Cash Deposit")
+        self.assertEqual(instance.awardDate, datetime.date(2025,6,12))
+        self.assertEqual(instance.vestingDate, datetime.date(2026,6,12))
+        self.assertEqual(instance.quantity, decimal.Decimal("2.6454"))
+        self.assertEqual(instance.price, decimal.Decimal("204.51"))
+        self.assertEqual(instance.value, decimal.Decimal("541.01"))
+        self.assertEqual(instance.serialNumber, None)
+        self.assertEqual(instance.deliveryType, None)
+        self.assertEqual(instance.commodityType, None)
+        self.assertEqual(instance.fineness, decimal.Decimal("0.0"))
+        self.assertEqual(instance.weight, decimal.Decimal("0.0"))
+
+class TradeInitialInvestmentTestCase(unittest.TestCase):
+    """Test case for Trade.initialInvestment as boolean field.
+
+    Tests the fix for https://github.com/vroonhof/opensteuerauszug/issues/106
+    where initialInvestment="Yes" was causing parsing errors.
+    """
+    data = ET.fromstring(
+        '<Trade accountId="U123456" currency="USD" assetCategory="STK" '
+         'symbol="TEST" initialInvestment="Yes" quantity="100" />'
+    )
+
+    def testParse(self):
+        instance = parser.parse_data_element(self.data)
+        self.assertIsInstance(instance, Types.Trade)
+        self.assertEqual(instance.accountId, "U123456")
+        self.assertEqual(instance.currency, "USD")
+        self.assertEqual(instance.assetCategory, enums.AssetClass.STOCK)
+        self.assertEqual(instance.symbol, "TEST")
+        self.assertEqual(instance.initialInvestment, True)
+        self.assertEqual(instance.quantity, decimal.Decimal("100"))
+
+
+class EquitySummaryLiteSurchargeAccrualsTestCase(unittest.TestCase):
+    """Test case for EquitySummaryByReportDateInBase.liteSurchargeAccruals field.
+
+    Tests the fix for https://github.com/vroonhof/opensteuerauszug/issues/106
+    where liteSurchargeAccruals attribute was missing.
+    """
+    data = ET.fromstring(
+        '<EquitySummaryByReportDateInBase accountId="U123456" '
+         'reportDate="2024-01-01" cash="1000.00" total="1000.00" '
+         'liteSurchargeAccruals="5.50" />'
+    )
+
+    def testParse(self):
+        instance = parser.parse_data_element(self.data)
+        self.assertIsInstance(instance, Types.EquitySummaryByReportDateInBase)
+        self.assertEqual(instance.accountId, "U123456")
+        self.assertEqual(instance.reportDate, datetime.date(2024, 1, 1))
+        self.assertEqual(instance.cash, decimal.Decimal("1000.00"))
+        self.assertEqual(instance.total, decimal.Decimal("1000.00"))
+        self.assertEqual(instance.liteSurchargeAccruals, decimal.Decimal("5.50"))
 
 
 if __name__ == '__main__':
