@@ -15,7 +15,7 @@ Everybody's talking at the same time
 __title__ = "ibflex2"
 __description__ = (
     "Parse Interactive Brokers Flex XML reports and convert to Python types (maintained fork)"
-),
+)
 __url__ = "https://github.com/robcohen/ibflex2"
 __upstream_url__ = "https://github.com/csingley/ibflex"
 __version__ = "1.0.0"

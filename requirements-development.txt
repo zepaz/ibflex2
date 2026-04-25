@@ -1,15 +1,4 @@
 --index-url https://pypi.python.org/simple/
 
-# `setup.py develop`
--e .
-
-# web client
-requests
-types-requests
-
-# test running
-nose
-coverage
-pylint
-mypy
-black
+# Editable install with web + dev extras (pyproject.toml)
+-e .[web,dev]
