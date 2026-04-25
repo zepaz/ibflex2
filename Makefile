@@ -1,28 +1,24 @@
 test:
 	coverage erase
-	mypy ibflex
-	mypy tests
-	python `which nosetests` -dsv --with-coverage --cover-package ibflex tests/*.py
-
-clean:
-	find -regex '.*\.pyc' -exec rm {} \;
-	find -regex '.*~' -exec rm {} \;
-	rm -rf reg-settings.py
-	rm -rf MANIFEST dist build *.egg-info
-	rm -rf test.db
-
-install:
-	make clean
-	make uninstall
-	python setup.py install
-
-uninstall:
-	pip uninstall -y ibflex
+	mypy ibflex tests
+	ruff check ibflex tests
+	pytest --cov=ibflex --cov-report=term --cov-fail-under=85 tests/
 
 lint:
-	pylint ibflex/*.py
+	ruff check ibflex tests
 
-lint-tests:
-	pylint tests/*.py
+format:
+	ruff format ibflex tests
 
-.PHONY:	test clean lint lint-tests install uninstall
+clean:
+	find . -regex '.*\.pyc' -exec rm {} \;
+	find . -regex '.*~' -exec rm {} \;
+	rm -rf MANIFEST dist build *.egg-info .coverage .mypy_cache .ruff_cache .pytest_cache
+
+install:
+	pip install -e .[web,dev]
+
+uninstall:
+	pip uninstall -y ibflex2
+
+.PHONY:	test lint format clean install uninstall

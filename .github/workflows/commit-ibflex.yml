@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   push:
@@ -7,25 +7,37 @@ on:
     branches: [master, main]
 
 jobs:
-  test:
+  ruff:
+    name: Lint (ruff)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/ruff-action@v3
+        with:
+          src: "./ibflex ./tests"
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+  mypy:
+    name: Type check (mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .[web,dev]
+      - run: mypy ibflex tests
+
+  pytest:
+    name: Tests (pytest, py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: pip install -r requirements-development.txt
-
-      - name: Static analysis with mypy
-        run: mypy ibflex tests
-
-      - name: Test with nose
-        run: nosetests -dsv --with-coverage --cover-package ibflex tests/*.py
+      - run: pip install -e .[web,dev]
+      - run: pytest --cov=ibflex --cov-report=term --cov-fail-under=85 tests/

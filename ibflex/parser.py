@@ -1,4 +1,3 @@
-# coding: utf-8
 """Parser/type converter for data in Interactive Brokers' Flex XML format.
 
 https://www.interactivebrokers.com/en/software/reportguide/reportguide.htm
@@ -7,12 +6,12 @@ Flex report configuration needed by this module:
     Date format: choose yyyy-MM-dd
     Trades: uncheck "Symbol Summary", "Asset Class", "Orders"
 """
-import xml.etree.ElementTree as ET
 import datetime
 import decimal
-import itertools
 import functools
-from typing import Tuple, Union, Optional, Any, Callable, Iterable
+import itertools
+import xml.etree.ElementTree as ET
+from typing import Any, Callable, Iterable, Optional, Tuple, Type, Union
 
 from ibflex import Types, enums, utils
 
@@ -134,7 +133,7 @@ def parse_data_element(
 
 
 def parse_element_attr(
-    Class: Types.FlexElement, name: str, value: str
+    Class: Type[Types.FlexElement], name: str, value: str
 ) -> Tuple[str, Any]:
     """Convert an XML element attribute into its corresponding Python type,
     based on the FlexElement subclass attribute type hint.
@@ -159,10 +158,10 @@ def parse_element_attr(
         converted = ATTRIB_CONVERTERS[Type](value=value)
         return name, converted
     except KeyError as exc:
-        msg = f"{Class.__name__}.{name} - Don't know how to convert "  # type: ignore
+        msg = f"{Class.__name__}.{name} - Don't know how to convert "
         raise FlexParserError(msg + str(exc))
     except Exception as exc:
-        msg = f"{Class.__name__}.{name} - " + str(exc)  # type: ignore
+        msg = f"{Class.__name__}.{name} - " + str(exc)
         raise FlexParserError(msg)
 
 
@@ -244,17 +243,6 @@ def prep_datetime(value: str) -> Tuple[int, ...]:
 
     # Multiple date/time separators appear in input value.
     raise FlexParserError(f"Bad date/time format: {value}")
-
-    sep = seps[0]
-
-    try:
-        #  HACK - some old data has ", " separator, which shows up as
-        #  seps = [",", ""].  Keep the comma, strip the space.
-        datestr, timestr = value.split(sep)
-        timestr = timestr.strip()
-        return merge_date_time(datestr, timestr)
-    except Exception:
-        raise FlexParserError(f"Bad date/time format: {value}")
 
 
 def prep_sequence(value: str) -> Iterable[str]:

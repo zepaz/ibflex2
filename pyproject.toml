@@ -1,0 +1,132 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ibflex2"
+dynamic = ["version"]
+description = "Parse Interactive Brokers Flex XML reports and convert to Python types (maintained fork)"
+readme = "README.rst"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Christopher Singley", email = "csingley@gmail.com" },
+]
+maintainers = [
+    { name = "robcohen" },
+]
+keywords = ["Interactive Brokers", "ibkr", "flex", "xml"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+    "Topic :: Office/Business",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Accounting",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/robcohen/ibflex2"
+Upstream = "https://github.com/csingley/ibflex"
+
+[project.optional-dependencies]
+web = ["requests"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "coverage",
+    "mypy",
+    "ruff",
+    "types-requests",
+    "build",
+    "requests",
+]
+
+[project.scripts]
+flexget = "ibflex.client:main"
+
+[tool.setuptools]
+packages = ["ibflex"]
+
+[tool.setuptools.package-data]
+ibflex = ["py.typed"]
+
+[tool.setuptools.dynamic]
+version = { attr = "ibflex.__version__.__version__" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["ibflex"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+check_untyped_defs = false
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "PIE",  # flake8-pie
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "E741",   # ambiguous variable name (legacy `Type` etc.)
+    "UP006",  # use `tuple` not `Tuple` (parser dispatch table is keyed on string form)
+    "UP007",  # use `X | Y` not `Union` (same)
+    "UP035",  # `typing.Tuple` deprecated (same)
+    "UP037",  # quoted annotation (forward refs in Types.py are intentional)
+    "UP045",  # use `X | None` not `Optional[X]` (parser depends on the string form)
+    "B008",   # function call in default argument
+    "B904",   # raise-without-from-inside-except (legacy code; FlexParserError is informational)
+    "RUF003", # ambiguous unicode character in comment
+    "RUF005", # collection literal concatenation
+    "RUF012", # mutable class attrs (dataclass false-positive)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+"ibflex/__init__.py" = ["F401", "F403"]  # public re-exports
+
+[tool.ruff.format]
+quote-style = "double"

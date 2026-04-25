@@ -1,4 +1,3 @@
-# coding: utf-8
 """Enumerated values (Python enum.Enum subclasses) used to define ibflex.Types.
 
 Values are the text sent by IB in XML element attribute.
@@ -9,23 +8,23 @@ and EnumType (as Optional type) at the end of the file.
 """
 
 __all__ = [
+    "ENUMS",
+    "AssetClass",
+    "BuySell",
     "CashAction",
     "Code",
-    "AssetClass",
-    "TradeType",
-    "BuySell",
-    "OpenClose",
-    "OrderType",
-    "Reorg",
-    "OptionAction",
-    "LongShort",
-    "TransferType",
-    "ToFrom",
-    "InOut",
     "DeliveredReceived",
-    "ENUMS",
     "EnumType",
-    "PutCall"
+    "InOut",
+    "LongShort",
+    "OpenClose",
+    "OptionAction",
+    "OrderType",
+    "PutCall",
+    "Reorg",
+    "ToFrom",
+    "TradeType",
+    "TransferType"
 ]
 
 import enum

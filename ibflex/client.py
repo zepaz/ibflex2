@@ -1,19 +1,32 @@
-# coding: utf-8
 """
 Download Flex queries without logging into Account Management web page.
 
 https://www.interactivebrokers.com/en/software/am/am/reports/flex_web_service_version_3.htm
 """
 # stdlib imports
-from dataclasses import dataclass
-import xml.etree.ElementTree as ET
-from datetime import datetime
 import time
-from typing import Union, Optional
+import xml.etree.ElementTree as ET
+from dataclasses import dataclass
+from datetime import datetime
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    import requests
 
 
-# 3rd party imports
-import requests
+def _requests():
+    """Lazy-import requests so that `import ibflex` works without it.
+
+    The `web` extra installs requests; only the client functions need it.
+    """
+    try:
+        import requests
+    except ImportError as exc:
+        raise ImportError(
+            "ibflex.client requires the 'requests' package. "
+            "Install with: pip install ibflex2[web]"
+        ) from exc
+    return requests
 
 
 ###############################################################################
@@ -62,10 +75,10 @@ class BadResponseError(IbflexClientError):
     """
     Exception raised for malformed Flex response.
     """
-    def __init__(self, response: requests.Response):
+    def __init__(self, response: "requests.Response"):
         self.response = response
-        super(BadResponseError, self).__init__(response.content)
-        
+        super().__init__(response.content)
+
 
 class StatementGenerationTimeout(IbflexClientError):
     """ Exception raised when the Flex server says it is generating the response,
@@ -80,7 +93,7 @@ class ResponseCodeError(IbflexClientError):
     def __init__(self, code: str, msg: str):
         self.code = code
         self.msg = msg
-        super(ResponseCodeError, self).__init__(f"Code={code}: {msg}")
+        super().__init__(f"Code={code}: {msg}")
 
 
 ###############################################################################
@@ -146,13 +159,15 @@ def request_statement(
     return stmt_access
 
 
-def submit_request(url: str, token: str, query: str) -> requests.Response:
+def submit_request(url: str, token: str, query: str) -> "requests.Response":
     """Post a query to an API access point, along with an authentication token.
 
     Retry with a progressive timeout window.
     """
     MAX_REQUESTS = 3
     TIMEOUT_INCREMENT = 5
+
+    requests = _requests()
 
     response = None
     req_count = 1
@@ -175,7 +190,7 @@ def submit_request(url: str, token: str, query: str) -> requests.Response:
 
 
 def parse_stmt_response(
-    response: requests.Response
+    response: "requests.Response"
 ) -> Union[StatementAccess, StatementError]:
     """Read 1st step response; parse into StatementAccess or StatementError.
     """
@@ -184,10 +199,25 @@ def parse_stmt_response(
         assert elem.tag == 'FlexStatementResponse'
 
         timestamp = elem.attrib['timestamp']
-        # Convert "EST"/"EDT" to UTC offset so datetime.strptime can understand
-        tz = {'EST': '-0500', 'EDT': '-0400'}[timestamp[-3:]]
-        timestamp = timestamp[:-3] + tz
-        datetime_ = datetime.strptime(timestamp, '%d %B, %Y %I:%M %p %z')
+        # Convert IB's textual timezone abbreviation to a UTC offset that
+        # datetime.strptime understands. IB has historically used EST/EDT;
+        # other US zones are mapped defensively. Unknown abbreviations are
+        # dropped and the timestamp is parsed as naive.
+        TZ_OFFSETS = {
+            'EST': '-0500', 'EDT': '-0400',
+            'CST': '-0600', 'CDT': '-0500',
+            'MST': '-0700', 'MDT': '-0600',
+            'PST': '-0800', 'PDT': '-0700',
+            'UTC': '+0000', 'GMT': '+0000',
+        }
+        abbrev = timestamp[-3:]
+        if abbrev in TZ_OFFSETS:
+            timestamp = timestamp[:-3] + TZ_OFFSETS[abbrev]
+            datetime_ = datetime.strptime(timestamp, '%d %B, %Y %I:%M %p %z')
+        else:
+            datetime_ = datetime.strptime(
+                timestamp[:-3].rstrip(), '%d %B, %Y %I:%M %p'
+            )
 
         data = {child.tag: child.text for child in elem}
         status = data.pop("Status")
@@ -202,7 +232,7 @@ def parse_stmt_response(
         raise BadResponseError(response=response)
 
 
-def check_statement_response(response: requests.Response) -> Union[bool, int]:
+def check_statement_response(response: "requests.Response") -> Union[bool, int]:
     """Validate response received from 2nd step of download.
 
     Returns:
