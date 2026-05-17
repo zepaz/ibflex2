@@ -25,7 +25,7 @@ from pathlib import Path
 # Add project root to path so this runs from `python scripts/check_schema_drift.py`.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ibflex import Types  # noqa: E402
+from ibflex import Types
 
 REFERENCE_URL = (
     "https://www.interactivebrokers.com/en/software/reportguide/"
@@ -43,6 +43,7 @@ IGNORED = {
 
 
 def fetch_reference_html(url: str = REFERENCE_URL) -> str:
+    """Fetch data from URL."""
     req = urllib.request.Request(
         url, headers={"User-Agent": "ibflex2-schema-drift/1.0"}
     )
@@ -78,6 +79,7 @@ def known_attributes() -> set[str]:
 
 
 def main() -> int:
+    """Checks whether the schema on IBKR side has changed compared to the maps."""
     html = fetch_reference_html()
     candidates = extract_candidate_fields(html)
     known = known_attributes()
