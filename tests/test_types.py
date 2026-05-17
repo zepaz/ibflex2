@@ -2104,5 +2104,36 @@ class EquitySummaryLiteSurchargeAccrualsTestCase(unittest.TestCase):
         self.assertEqual(instance.liteSurchargeAccruals, decimal.Decimal("5.50"))
 
 
+
+class TransactionTaxDetailSubCategoryTestCase(unittest.TestCase):
+    """Ensure TransactionTaxDetail accepts subCategory from Flex XML."""
+
+    data = ET.fromstring(
+
+            '<TransactionTaxDetail accountId="U123456" acctAlias="" model="" '
+            'currency="AUD" fxRateToBase="1" assetCategory="STK" subCategory="COMMON" '
+            'symbol="ABC" description="Tax detail sample" conid="12345" '
+            'securityID="AU000000ABC1" securityIDType="ISIN" cusip="" isin="AU000000ABC1" figi="BBG000ABC123" issuerCountryCode="AU" '
+            'listingExchange="ASX" underlyingConid="" underlyingSecurityID="" '
+            'underlyingSymbol="ABC" underlyingListingExchange="ASX" issuer="" '
+            'multiplier="1" strike="" expiry="" putCall="" principalAdjustFactor="" '
+            'date="2026-05-17" taxDescription="Sample tax" quantity="10" '
+            'reportDate="2026-05-17" taxAmount="-1.23" tradeId="1" tradePrice="10" '
+            'source="IB" code="A" levelOfDetail="DETAIL" />'
+
+    )
+
+    def testParse(self):
+        instance = parser.parse_data_element(self.data)
+        self.assertIsInstance(instance, Types.TransactionTaxDetail)
+        self.assertEqual(instance.assetCategory, enums.AssetClass.STOCK)
+        self.assertEqual(instance.subCategory, "COMMON")
+        self.assertEqual(instance.symbol, "ABC")
+        self.assertEqual(instance.figi, "BBG000ABC123")
+        self.assertEqual(instance.issuerCountryCode, "AU")
+        self.assertEqual(instance.taxAmount, decimal.Decimal("-1.23"))
+
 if __name__ == '__main__':
     unittest.main(verbosity=3)
+
+
