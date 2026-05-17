@@ -97,7 +97,7 @@ __all__ = [
 import datetime
 import decimal
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from ibflex import enums
 
@@ -153,7 +153,7 @@ class FlexStatement(FlexElement):
     Trades: Tuple["Trade", ...] = ()
     HKIPOSubscriptionActivity: Tuple = ()  # TODO
     TradeConfirms: Tuple["TradeConfirm", ...] = ()
-    TransactionTaxes: Tuple = ()
+    TransactionTaxes: Tuple[Union["TransactionTax", "TransactionTaxDetail"], ...] = ()
     OptionEAE: Tuple["_OptionEAE", ...] = ()
     # Not a typo - they really spell it "Excercises"
     PendingExcercises: Tuple = ()  # TODO
@@ -2755,6 +2755,7 @@ class TransactionTaxDetail(FlexElement):
     currency: Optional[str] = None
     fxRateToBase: Optional[decimal.Decimal] = None
     assetCategory: Optional[enums.AssetClass] = None
+    subCategory: Optional[str] = None
     symbol: Optional[str] = None
     description: Optional[str] = None
     conid: Optional[str] = None
@@ -2783,6 +2784,15 @@ class TransactionTaxDetail(FlexElement):
     source: Optional[str] = None
     code: Tuple[enums.Code, ...] = ()
     levelOfDetail: Optional[str] = None
+    figi: Optional[str] = None
+    issuerCountryCode: Optional[str] = None
+    settleDate: Optional[datetime.date] = None
+    orderId: Optional[str] = None
+    serialNumber: Optional[str] = None
+    deliveryType: Optional[str] = None
+    commodityType: Optional[str] = None
+    fineness: Optional[decimal.Decimal] = None
+    weight: Optional[str] = None
 
 
 @dataclass(frozen=True)
