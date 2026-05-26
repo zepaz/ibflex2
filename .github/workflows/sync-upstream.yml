@@ -21,7 +21,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Add upstream remote
-        run: git remote add upstream https://github.com/csingley/ibflex.git || true
+        run: git remote add upstream https://github.com/robcohen/ibflex2.git || true
 
       - name: Fetch upstream
         run: git fetch upstream
@@ -54,7 +54,7 @@ jobs:
               --body "$(cat <<'EOF'
           ## Upstream sync
 
-          This PR merges the latest changes from [csingley/ibflex](https://github.com/csingley/ibflex).
+          This PR merges the latest changes from [robcohen/ibflex2](https://github.com/robcohen/ibflex2).
 
           **Review carefully** - ensure ibflex2-specific changes (package name, README notice, etc.) are preserved.
 
