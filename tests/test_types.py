@@ -2109,7 +2109,6 @@ class TransactionTaxDetailSubCategoryTestCase(unittest.TestCase):
     """Ensure TransactionTaxDetail accepts subCategory from Flex XML."""
 
     data = ET.fromstring(
-
             '<TransactionTaxDetail accountId="U123456" acctAlias="" model="" '
             'currency="AUD" fxRateToBase="1" assetCategory="STK" subCategory="COMMON" '
             'symbol="ABC" description="Tax detail sample" conid="12345" '
@@ -2120,7 +2119,6 @@ class TransactionTaxDetailSubCategoryTestCase(unittest.TestCase):
             'date="2026-05-17" taxDescription="Sample tax" quantity="10" '
             'reportDate="2026-05-17" taxAmount="-1.23" tradeId="1" tradePrice="10" '
             'source="IB" code="A" levelOfDetail="DETAIL" />'
-
     )
 
     def testParse(self):
