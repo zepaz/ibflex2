@@ -10,6 +10,8 @@
   `Decimal` typing was incorrect and would raise `FlexParserError` on real-world data. Code
   doing arithmetic comparisons (`if trade.initialInvestment > 0:`) needs to be updated; under
   Python's `True > 0` semantics it would silently misbehave with the new type.
+- type `FlexStatement.TransactionTaxes` as `Tuple[Union[TransactionTax, TransactionTaxDetail], ...]`
+  instead of bare `Tuple`
 
 ### Added
 
@@ -31,6 +33,9 @@
   faster than the type definitions can be updated. Off by default; toggle with
   `disable_unknown_attribute_tolerance()`. Note: the flag is module-level global state and
   is **not thread-safe**.
+- New subCategory plus newer IB attributes on `TransactionTaxDetail` (`figi`,
+  `issuerCountryCode`, `settleDate`, `orderId`, `serialNumber`, `deliveryType`, `commodityType`,
+  `fineness`, `weight`)
 
 ### Fixed
 
@@ -57,6 +62,7 @@
   trailing-TZ-offset values.
 - CI matrix expanded to `ubuntu-latest`, `macos-latest`, and `windows-latest`
   across Python 3.9-3.13.
+- regression test for parsing `TransactionTaxDetail` with `subCategory`/`figi`/`issuerCountryCode`
 
 ### Docs
 
