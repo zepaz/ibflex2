@@ -59,6 +59,7 @@ dev = [
     "types-defusedxml",
     "build",
     "requests",
+    "pre-commit",
 ]
 
 [project.scripts]
